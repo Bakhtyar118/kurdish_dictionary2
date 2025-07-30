@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 
 function App() {
+  // All your state variables for each input
   const [word, setWord] = useState("");
   const [latin, setLatin] = useState("");
   const [definition, setDefinition] = useState("");
@@ -11,13 +12,46 @@ function App() {
   const [regional, setRegional] = useState("");
   const [ipa, setIPA] = useState("");
 
+  // This function sends your data to the backend API when you submit
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("https://kurdish-dictionary2.onrender.com/words/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          word,
+          latin,
+          definition,
+          english,
+          synonyms,
+          antonyms,
+          example,
+          regional,
+          ipa,
+        }),
+      });
+      if (res.ok) {
+        alert("Word added!");
+        // Clear form after success
+        setWord(""); setLatin(""); setDefinition(""); setEnglish("");
+        setSynonyms(""); setAntonyms(""); setExample(""); setRegional(""); setIPA("");
+      } else {
+        const err = await res.json();
+        alert("Failed: " + (err.detail || "Unknown error"));
+      }
+    } catch (err) {
+      alert("Network error: " + err.message);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-blue-50 to-purple-100 flex flex-col items-center justify-center py-10">
       <div className="w-full max-w-lg rounded-xl shadow-2xl bg-white/95 p-8">
         <h1 className="text-3xl font-bold mb-6 text-blue-800 flex items-center gap-2 justify-end" dir="rtl">
           <span role="img" aria-label="key">🔑</span> وشە زیاد بکە
         </h1>
-        <form className="space-y-6">
+        <form className="space-y-6" onSubmit={handleSubmit}>
           {/* Kurdish word + IPA beside each other */}
           <div className="flex gap-4">
             <div className="w-2/3">

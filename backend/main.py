@@ -1,16 +1,29 @@
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from typing import List
 
-# Database setup
+# 1. CREATE THE APP FIRST
+app = FastAPI()
+
+# 2. THEN ADD CORS MIDDLEWARE!
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://kurdish-dictionary2.vercel.app"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# --- Rest of your code ---
+
 DATABASE_URL = "sqlite:///./kurdish_dictionary2.db"
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
 
-# SQLAlchemy model (table)
 class Word(Base):
     __tablename__ = "words"
     id = Column(Integer, primary_key=True, index=True)
@@ -19,17 +32,14 @@ class Word(Base):
     definition = Column(String)
     english = Column(String)
 
-# Create tables
 Base.metadata.create_all(bind=engine)
 
-# Pydantic model (for API input/output)
 class WordCreate(BaseModel):
     word: str
     latin: str
     definition: str
     english: str
 
-# DB dependency
 def get_db():
     db = SessionLocal()
     try:
@@ -37,15 +47,10 @@ def get_db():
     finally:
         db.close()
 
-# FastAPI app
-app = FastAPI()
-
-# Home endpoint        
 @app.get("/")
 def read_root():
     return {"message": "API with SQLite works!"}
 
-# GET: List words
 @app.get("/words/", response_model=List[WordCreate])
 def list_words(db: Session = Depends(get_db)):
     words = db.query(Word).all()
@@ -59,7 +64,6 @@ def list_words(db: Session = Depends(get_db)):
         for w in words
     ]
 
-# POST: Add word
 @app.post("/words/", response_model=WordCreate)
 def create_word(word: WordCreate, db: Session = Depends(get_db)):
     db_word = Word(

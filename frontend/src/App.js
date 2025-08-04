@@ -1,38 +1,65 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+
+const API_URL = "https://kurdish-dictionary2.onrender.com";
+
+const fieldList = [
+  { name: "word", label: "وشە (کوردی)", rtl: true },
+  { name: "latin", label: "Latin" },
+  { name: "plural", label: "Plural" },
+  { name: "ipa", label: "IPA" },
+  { name: "definition", label: "پێناسە", rtl: true, textarea: true },
+  { name: "english", label: "English" },
+  { name: "kurmanji", label: "Kurmanji" },
+  { name: "arabic", label: "Arabic" },
+  { name: "farsi", label: "Farsi" },
+  { name: "phrase", label: "Phrase", textarea: true },
+  { name: "note", label: "Note", textarea: true },
+  { name: "synonyms", label: "Synonyms", textarea: true },
+  { name: "antonyms", label: "Antonyms", textarea: true },
+  { name: "example", label: "Example", textarea: true },
+  { name: "regional", label: "Regional", textarea: true },
+];
 
 function App() {
-  const [word, setWord] = useState("");
-  const [plural, setPlural] = useState("");
-  const [latin, setLatin] = useState("");
-  const [definition, setDefinition] = useState("");
-  const [english, setEnglish] = useState("");
-  const [kurmanji, setKurmanji] = useState("");
-  const [arabic, setArabic] = useState("");
-  const [farsi, setFarsi] = useState("");
-  const [phrase, setPhrase] = useState("");
-  const [note, setNote] = useState("");
-  const [synonyms, setSynonyms] = useState("");
-  const [antonyms, setAntonyms] = useState("");
-  const [example, setExample] = useState("");
-  const [regional, setRegional] = useState("");
-  const [ipa, setIPA] = useState("");
+  const [words, setWords] = useState([]);
+  const [editingId, setEditingId] = useState(null);
+  const [form, setForm] = useState(
+    Object.fromEntries(fieldList.map((f) => [f.name, ""]))
+  );
 
-  const handleSubmit = async (e) => {
+  // Load words on mount
+  useEffect(() => {
+    fetchWords();
+  }, []);
+
+  function fetchWords() {
+    fetch(`${API_URL}/words/`)
+      .then((res) => res.json())
+      .then(setWords)
+      .catch(() => setWords([]));
+  }
+
+  function handleChange(e) {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  }
+
+  async function handleSubmit(e) {
     e.preventDefault();
+    const url = editingId
+      ? `${API_URL}/words/${editingId}`
+      : `${API_URL}/words/`;
+    const method = editingId ? "PUT" : "POST";
     try {
-      const res = await fetch("https://kurdish-dictionary2.onrender.com/words/", {
-        method: "POST",
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          word, plural, latin, definition, english, kurmanji, arabic, farsi, phrase, note,
-          synonyms, antonyms, example, regional, ipa,
-        }),
+        body: JSON.stringify(form),
       });
       if (res.ok) {
-        alert("Word added!");
-        setWord(""); setPlural(""); setLatin(""); setDefinition(""); setEnglish("");
-        setKurmanji(""); setArabic(""); setFarsi(""); setPhrase(""); setNote("");
-        setSynonyms(""); setAntonyms(""); setExample(""); setRegional(""); setIPA("");
+        alert(editingId ? "Word updated!" : "Word added!");
+        setForm(Object.fromEntries(fieldList.map((f) => [f.name, ""])));
+        setEditingId(null);
+        fetchWords();
       } else {
         const err = await res.json();
         alert("Failed: " + (err.detail || "Unknown error"));
@@ -40,170 +67,106 @@ function App() {
     } catch (err) {
       alert("Network error: " + err.message);
     }
-  };
+  }
+
+  function handleEdit(wordObj) {
+    setForm(wordObj);
+    setEditingId(wordObj.id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function handleDelete(id) {
+    if (!window.confirm("Are you sure?")) return;
+    await fetch(`${API_URL}/words/${id}`, { method: "DELETE" });
+    setWords(words.filter((w) => w.id !== id));
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-blue-50 to-purple-100 flex flex-col items-center justify-center py-10">
-      <div className="w-full max-w-lg rounded-xl shadow-2xl bg-white/95 p-8">
+      <div className="w-full max-w-2xl rounded-xl shadow-2xl bg-white/95 p-8 mb-8">
         <h1 className="text-3xl font-bold mb-6 text-blue-800 flex items-center gap-2 justify-end" dir="rtl">
           <span role="img" aria-label="key">🔑</span> وشە زیاد بکە
         </h1>
         <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="flex gap-4">
-            <div className="w-1/2">
-              <label className="block mb-1 text-right">وشە</label>
-              <input
-                dir="rtl"
-                className="border rounded-lg p-2 w-full"
-                value={word}
-                onChange={e => setWord(e.target.value)}
-                required
-                placeholder="وشە/Word (any script)"
-              />
+          {fieldList.map(({ name, label, rtl, textarea }) => (
+            <div key={name}>
+              <label className={`block mb-1 font-semibold text-right`}>
+                {label}
+              </label>
+              {textarea ? (
+                <textarea
+                  name={name}
+                  value={form[name] || ""}
+                  onChange={handleChange}
+                  className="border border-gray-300 rounded-lg p-3 w-full min-h-[60px] focus:ring-2 focus:ring-purple-200"
+                  dir={rtl ? "rtl" : "ltr"}
+                  placeholder={label}
+                  rows={2}
+                />
+              ) : (
+                <input
+                  name={name}
+                  value={form[name] || ""}
+                  onChange={handleChange}
+                  className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-300"
+                  dir={rtl ? "rtl" : "ltr"}
+                  placeholder={label}
+                />
+              )}
             </div>
-            <div className="w-1/2">
-              <label className="block mb-1 text-right">Plural</label>
-              <input
-                className="border rounded-lg p-2 w-full"
-                value={plural}
-                onChange={e => setPlural(e.target.value)}
-                placeholder="Plural form"
-              />
-            </div>
-          </div>
-          <div className="flex gap-4">
-            <div className="w-1/2">
-              <label className="block mb-1 text-right">Latin</label>
-              <input
-                className="border rounded-lg p-2 w-full"
-                value={latin}
-                onChange={e => setLatin(e.target.value)}
-                placeholder="Latin spelling"
-              />
-            </div>
-            <div className="w-1/2">
-              <label className="block mb-1 text-right">IPA</label>
-              <input
-                className="border rounded-lg p-2 w-full"
-                value={ipa}
-                onChange={e => setIPA(e.target.value)}
-                placeholder="IPA [ˈkʊɾdɪ]"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block mb-1 text-right">Definition (کوردی)</label>
-            <textarea
-              dir="rtl"
-              className="border rounded-lg p-2 w-full"
-              value={definition}
-              onChange={e => setDefinition(e.target.value)}
-              placeholder="پێناسە / Definition"
-            />
-          </div>
-          <div className="flex gap-4">
-            <div className="w-1/2">
-              <label className="block mb-1">English</label>
-              <input
-                className="border rounded-lg p-2 w-full"
-                value={english}
-                onChange={e => setEnglish(e.target.value)}
-                placeholder="English translation"
-              />
-            </div>
-            <div className="w-1/2">
-              <label className="block mb-1">Kurmanji</label>
-              <input
-                className="border rounded-lg p-2 w-full"
-                value={kurmanji}
-                onChange={e => setKurmanji(e.target.value)}
-                placeholder="Kurmanji translation"
-              />
-            </div>
-          </div>
-          <div className="flex gap-4">
-            <div className="w-1/2">
-              <label className="block mb-1">Arabic</label>
-              <input
-                className="border rounded-lg p-2 w-full"
-                value={arabic}
-                onChange={e => setArabic(e.target.value)}
-                placeholder="Arabic translation"
-              />
-            </div>
-            <div className="w-1/2">
-              <label className="block mb-1">Farsi</label>
-              <input
-                className="border rounded-lg p-2 w-full"
-                value={farsi}
-                onChange={e => setFarsi(e.target.value)}
-                placeholder="Farsi translation"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block mb-1">Phrase</label>
-            <input
-              className="border rounded-lg p-2 w-full"
-              value={phrase}
-              onChange={e => setPhrase(e.target.value)}
-              placeholder="Phrase example"
-            />
-          </div>
-          <div>
-            <label className="block mb-1">Note</label>
-            <input
-              className="border rounded-lg p-2 w-full"
-              value={note}
-              onChange={e => setNote(e.target.value)}
-              placeholder="Any extra info"
-            />
-          </div>
-          <div className="flex gap-4">
-            <div className="w-1/2">
-              <label className="block mb-1">Synonyms</label>
-              <input
-                className="border rounded-lg p-2 w-full"
-                value={synonyms}
-                onChange={e => setSynonyms(e.target.value)}
-                placeholder="Synonyms (comma separated)"
-              />
-            </div>
-            <div className="w-1/2">
-              <label className="block mb-1">Antonyms</label>
-              <input
-                className="border rounded-lg p-2 w-full"
-                value={antonyms}
-                onChange={e => setAntonyms(e.target.value)}
-                placeholder="Antonyms (comma separated)"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block mb-1">Example</label>
-            <textarea
-              className="border rounded-lg p-2 w-full"
-              value={example}
-              onChange={e => setExample(e.target.value)}
-              placeholder="Example sentence"
-            />
-          </div>
-          <div>
-            <label className="block mb-1">Regional</label>
-            <input
-              className="border rounded-lg p-2 w-full"
-              value={regional}
-              onChange={e => setRegional(e.target.value)}
-              placeholder="Regions"
-            />
-          </div>
+          ))}
           <button
             type="submit"
             className="mt-4 w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg py-3 font-bold shadow-lg hover:from-blue-600 hover:to-purple-600 transition"
           >
-            زیادکردن
+            {editingId ? "Update" : "زیادکردن"}
           </button>
+          {editingId && (
+            <button
+              type="button"
+              onClick={() => { setForm(Object.fromEntries(fieldList.map((f) => [f.name, ""]))); setEditingId(null); }}
+              className="ml-2 px-4 py-2 bg-gray-300 rounded-lg"
+            >
+              Cancel Edit
+            </button>
+          )}
         </form>
+      </div>
+      <div className="w-full max-w-4xl bg-white rounded-lg shadow p-4">
+        <h2 className="font-bold text-xl mb-3 text-purple-800">Words List</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs border">
+            <thead>
+              <tr>
+                {fieldList.slice(0, 8).map(f => (
+                  <th key={f.name}>{f.label}</th>
+                ))}
+                <th>Edit</th>
+                <th>Delete</th>
+              </tr>
+            </thead>
+            <tbody>
+              {words.map((w) => (
+                <tr key={w.id}>
+                  {fieldList.slice(0, 8).map(f => (
+                    <td key={f.name}>{w[f.name]}</td>
+                  ))}
+                  <td>
+                    <button onClick={() => handleEdit(w)} className="text-blue-600 underline">Edit</button>
+                  </td>
+                  <td>
+                    <button onClick={() => handleDelete(w.id)} className="text-red-600 underline">Delete</button>
+                  </td>
+                </tr>
+              ))}
+              {!words.length && (
+                <tr>
+                  <td colSpan={10}>No words found.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
       <footer className="mt-6 text-gray-500 text-sm">
         <span role="img" aria-label="sparkles">✨</span> Kurdish Dictionary Entry • Designed by Bakhtyar

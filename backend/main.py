@@ -19,7 +19,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-DATABASE_URL = "sqlite:///./kurdish_dictionary2.db"
+DATABASE_URL = "sqlite:////app/backend/kurdish_dictionary2.db"
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()

@@ -1,64 +1,54 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 
-const API_URL = "https://kurdish-dictionary2.onrender.com";
-
-const fieldList = [
-  { name: "word", label: "وشە (کوردی)", rtl: true },
-  { name: "latin", label: "Latin" },
-  { name: "plural", label: "Plural" },
-  { name: "ipa", label: "IPA" },
-  { name: "definition", label: "پێناسە", rtl: true, textarea: true },
-  { name: "english", label: "English" },
-  { name: "kurmanji", label: "Kurmanji" },
-  { name: "arabic", label: "Arabic" },
-  { name: "farsi", label: "Farsi" },
-  { name: "phrase", label: "Phrase", textarea: true },
-  { name: "note", label: "Note", textarea: true },
-  { name: "synonyms", label: "Synonyms", textarea: true },
-  { name: "antonyms", label: "Antonyms", textarea: true },
-  { name: "example", label: "Example", textarea: true },
-  { name: "regional", label: "Regional", textarea: true },
-];
-
-function App() {
+export default function App() {
   const [words, setWords] = useState([]);
-  const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState(
-    Object.fromEntries(fieldList.map((f) => [f.name, ""]))
-  );
+  // Form states
+  const [word, setWord] = useState("");
+  const [latin, setLatin] = useState("");
+  const [definition, setDefinition] = useState("");
+  const [plural, setPlural] = useState("");
+  const [english, setEnglish] = useState("");
+  const [kurmanji, setKurmanji] = useState("");
+  const [arabic, setArabic] = useState("");
+  const [farsi, setFarsi] = useState("");
+  const [regional, setRegional] = useState("");
+  const [synonyms, setSynonyms] = useState("");
+  const [antonyms, setAntonyms] = useState("");
+  const [phrase, setPhrase] = useState("");
+  const [example, setExample] = useState("");
+  const [note, setNote] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  // Load words on mount
   useEffect(() => {
     fetchWords();
   }, []);
 
-  function fetchWords() {
-    fetch(`${API_URL}/words/`)
-      .then((res) => res.json())
-      .then(setWords)
-      .catch(() => setWords([]));
-  }
-
-  function handleChange(e) {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  async function fetchWords() {
+    setLoading(true);
+    try {
+      const res = await fetch("https://kurdish-dictionary2.onrender.com/words/");
+      const data = await res.json();
+      setWords(data);
+    } catch (err) {
+      alert("Couldn't fetch words: " + err.message);
+    }
+    setLoading(false);
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const url = editingId
-      ? `${API_URL}/words/${editingId}`
-      : `${API_URL}/words/`;
-    const method = editingId ? "PUT" : "POST";
     try {
-      const res = await fetch(url, {
-        method,
+      const res = await fetch("https://kurdish-dictionary2.onrender.com/words/", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          word, latin, definition, plural, english, kurmanji, arabic, farsi,
+          regional, synonyms, antonyms, phrase, example, note
+        }),
       });
       if (res.ok) {
-        alert(editingId ? "Word updated!" : "Word added!");
-        setForm(Object.fromEntries(fieldList.map((f) => [f.name, ""])));
-        setEditingId(null);
+        alert("Word added!");
+        setWord(""); setLatin(""); setDefinition(""); setPlural(""); setEnglish(""); setKurmanji(""); setArabic(""); setFarsi(""); setRegional(""); setSynonyms(""); setAntonyms(""); setPhrase(""); setExample(""); setNote("");
         fetchWords();
       } else {
         const err = await res.json();
@@ -69,110 +59,126 @@ function App() {
     }
   }
 
-  function handleEdit(wordObj) {
-    setForm(wordObj);
-    setEditingId(wordObj.id);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  async function handleDelete(id) {
-    if (!window.confirm("Are you sure?")) return;
-    await fetch(`${API_URL}/words/${id}`, { method: "DELETE" });
-    setWords(words.filter((w) => w.id !== id));
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-blue-50 to-purple-100 flex flex-col items-center justify-center py-10">
-      <div className="w-full max-w-2xl rounded-xl shadow-2xl bg-white/95 p-8 mb-8">
-        <h1 className="text-3xl font-bold mb-6 text-blue-800 flex items-center gap-2 justify-end" dir="rtl">
-          <span role="img" aria-label="key">🔑</span> وشە زیاد بکە
-        </h1>
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          {fieldList.map(({ name, label, rtl, textarea }) => (
-            <div key={name}>
-              <label className={`block mb-1 font-semibold text-right`}>
-                {label}
-              </label>
-              {textarea ? (
-                <textarea
-                  name={name}
-                  value={form[name] || ""}
-                  onChange={handleChange}
-                  className="border border-gray-300 rounded-lg p-3 w-full min-h-[60px] focus:ring-2 focus:ring-purple-200"
-                  dir={rtl ? "rtl" : "ltr"}
-                  placeholder={label}
-                  rows={2}
-                />
-              ) : (
-                <input
-                  name={name}
-                  value={form[name] || ""}
-                  onChange={handleChange}
-                  className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-300"
-                  dir={rtl ? "rtl" : "ltr"}
-                  placeholder={label}
-                />
-              )}
-            </div>
-          ))}
-          <button
-            type="submit"
-            className="mt-4 w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg py-3 font-bold shadow-lg hover:from-blue-600 hover:to-purple-600 transition"
-          >
-            {editingId ? "Update" : "زیادکردن"}
-          </button>
-          {editingId && (
-            <button
-              type="button"
-              onClick={() => { setForm(Object.fromEntries(fieldList.map((f) => [f.name, ""]))); setEditingId(null); }}
-              className="ml-2 px-4 py-2 bg-gray-300 rounded-lg"
-            >
-              Cancel Edit
-            </button>
-          )}
-        </form>
-      </div>
-      <div className="w-full max-w-4xl bg-white rounded-lg shadow p-4">
-        <h2 className="font-bold text-xl mb-3 text-purple-800">Words List</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs border">
-            <thead>
-              <tr>
-                {fieldList.slice(0, 8).map(f => (
-                  <th key={f.name}>{f.label}</th>
-                ))}
-                <th>Edit</th>
-                <th>Delete</th>
-              </tr>
-            </thead>
-            <tbody>
-              {words.map((w) => (
-                <tr key={w.id}>
-                  {fieldList.slice(0, 8).map(f => (
-                    <td key={f.name}>{w[f.name]}</td>
-                  ))}
-                  <td>
-                    <button onClick={() => handleEdit(w)} className="text-blue-600 underline">Edit</button>
-                  </td>
-                  <td>
-                    <button onClick={() => handleDelete(w.id)} className="text-red-600 underline">Delete</button>
-                  </td>
-                </tr>
-              ))}
-              {!words.length && (
-                <tr>
-                  <td colSpan={10}>No words found.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-blue-50 to-purple-100 flex flex-col items-center py-10">
+      <h1 className="text-3xl font-bold mb-6 text-blue-800 text-center">
+        وشەکان (All Words in the Dictionary)
+      </h1>
+
+      {/* Data Entry Form */}
+      <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded-xl shadow mb-8 w-full max-w-3xl">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div>
+            <label className="block mb-1">وشە (Kurdish)</label>
+            <input className="border rounded w-full p-2" value={word} onChange={e => setWord(e.target.value)} required />
+          </div>
+          <div>
+            <label className="block mb-1">Latin</label>
+            <input className="border rounded w-full p-2" value={latin} onChange={e => setLatin(e.target.value)} />
+          </div>
+          <div>
+            <label className="block mb-1">Plural</label>
+            <input className="border rounded w-full p-2" value={plural} onChange={e => setPlural(e.target.value)} />
+          </div>
+          <div>
+            <label className="block mb-1">English</label>
+            <input className="border rounded w-full p-2" value={english} onChange={e => setEnglish(e.target.value)} />
+          </div>
+          <div>
+            <label className="block mb-1">Kurmanji</label>
+            <input className="border rounded w-full p-2" value={kurmanji} onChange={e => setKurmanji(e.target.value)} />
+          </div>
+          <div>
+            <label className="block mb-1">Arabic</label>
+            <input className="border rounded w-full p-2" value={arabic} onChange={e => setArabic(e.target.value)} />
+          </div>
+          <div>
+            <label className="block mb-1">Farsi</label>
+            <input className="border rounded w-full p-2" value={farsi} onChange={e => setFarsi(e.target.value)} />
+          </div>
+          <div>
+            <label className="block mb-1">Regional</label>
+            <input className="border rounded w-full p-2" value={regional} onChange={e => setRegional(e.target.value)} />
+          </div>
+          <div>
+            <label className="block mb-1">Synonyms</label>
+            <input className="border rounded w-full p-2" value={synonyms} onChange={e => setSynonyms(e.target.value)} />
+          </div>
+          <div>
+            <label className="block mb-1">Antonyms</label>
+            <input className="border rounded w-full p-2" value={antonyms} onChange={e => setAntonyms(e.target.value)} />
+          </div>
         </div>
+        <div>
+          <label className="block mb-1">پێناسە (Definition)</label>
+          <textarea className="border rounded w-full p-2" value={definition} onChange={e => setDefinition(e.target.value)} required />
+        </div>
+        <div>
+          <label className="block mb-1">Phrase</label>
+          <textarea className="border rounded w-full p-2" value={phrase} onChange={e => setPhrase(e.target.value)} />
+        </div>
+        <div>
+          <label className="block mb-1">Example</label>
+          <textarea className="border rounded w-full p-2" value={example} onChange={e => setExample(e.target.value)} />
+        </div>
+        <div>
+          <label className="block mb-1">Note</label>
+          <textarea className="border rounded w-full p-2" value={note} onChange={e => setNote(e.target.value)} />
+        </div>
+        <button className="bg-blue-500 text-white px-4 py-2 rounded" type="submit">
+          زیادکردن
+        </button>
+      </form>
+
+      {/* Table of Words */}
+      <div className="w-full max-w-7xl overflow-x-auto">
+        <table className="min-w-full border rounded-xl bg-white">
+          <thead>
+            <tr>
+              <th className="p-2 border">وشە</th>
+              <th className="p-2 border">Latin</th>
+              <th className="p-2 border">Plural</th>
+              <th className="p-2 border">English</th>
+              <th className="p-2 border">Kurmanji</th>
+              <th className="p-2 border">Arabic</th>
+              <th className="p-2 border">Farsi</th>
+              <th className="p-2 border">Regional</th>
+              <th className="p-2 border">Synonyms</th>
+              <th className="p-2 border">Antonyms</th>
+              <th className="p-2 border">پێناسە</th>
+              <th className="p-2 border">Phrase</th>
+              <th className="p-2 border">Example</th>
+              <th className="p-2 border">Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={14} className="text-center">Loading...</td></tr>
+            ) : words.length === 0 ? (
+              <tr><td colSpan={14} className="text-center">No words found.</td></tr>
+            ) : (
+              words.map((w, idx) => (
+                <tr key={idx}>
+                  <td className="p-2 border">{w.word}</td>
+                  <td className="p-2 border">{w.latin}</td>
+                  <td className="p-2 border">{w.plural}</td>
+                  <td className="p-2 border">{w.english}</td>
+                  <td className="p-2 border">{w.kurmanji}</td>
+                  <td className="p-2 border">{w.arabic}</td>
+                  <td className="p-2 border">{w.farsi}</td>
+                  <td className="p-2 border">{w.regional}</td>
+                  <td className="p-2 border">{w.synonyms}</td>
+                  <td className="p-2 border">{w.antonyms}</td>
+                  <td className="p-2 border" style={{ maxWidth: 180, whiteSpace: 'pre-wrap' }}>{w.definition}</td>
+                  <td className="p-2 border" style={{ maxWidth: 180, whiteSpace: 'pre-wrap' }}>{w.phrase}</td>
+                  <td className="p-2 border" style={{ maxWidth: 180, whiteSpace: 'pre-wrap' }}>{w.example}</td>
+                  <td className="p-2 border" style={{ maxWidth: 180, whiteSpace: 'pre-wrap' }}>{w.note}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
-      <footer className="mt-6 text-gray-500 text-sm">
-        <span role="img" aria-label="sparkles">✨</span> Kurdish Dictionary Entry • Designed by Bakhtyar
-      </footer>
     </div>
   );
 }
-
-export default App;

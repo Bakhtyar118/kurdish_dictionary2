@@ -11,7 +11,7 @@ app = FastAPI()
 # 2. THEN ADD CORS MIDDLEWARE!
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://kurdish-dictionary2.vercel.app"],
+    allow_origins=["https://kurdish-dictionary2.vercel.app", "http://localhost:3000"],                
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

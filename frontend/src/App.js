@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 function App() {
-  // All your state variables for each input
+  // Form state
   const [word, setWord] = useState("");
   const [latin, setLatin] = useState("");
   const [definition, setDefinition] = useState("");
@@ -12,7 +12,28 @@ function App() {
   const [regional, setRegional] = useState("");
   const [ipa, setIPA] = useState("");
 
-  // This function sends your data to the backend API when you submit
+  // List of words from backend
+  const [words, setWords] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch words when component mounts or after adding a word
+  const fetchWords = () => {
+    setLoading(true);
+    fetch("https://kurdish-dictionary2.onrender.com/words/")
+      .then((res) => res.json())
+      .then((data) => setWords(data))
+      .catch((err) => {
+        console.error("Failed to fetch words:", err);
+        setWords([]);
+      })
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchWords();
+  }, []);
+
+  // Add new word handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -33,9 +54,17 @@ function App() {
       });
       if (res.ok) {
         alert("Word added!");
-        // Clear form after success
-        setWord(""); setLatin(""); setDefinition(""); setEnglish("");
-        setSynonyms(""); setAntonyms(""); setExample(""); setRegional(""); setIPA("");
+        // Clear form
+        setWord("");
+        setLatin("");
+        setDefinition("");
+        setEnglish("");
+        setSynonyms("");
+        setAntonyms("");
+        setExample("");
+        setRegional("");
+        setIPA("");
+        fetchWords(); // Refresh list
       } else {
         const err = await res.json();
         alert("Failed: " + (err.detail || "Unknown error"));
@@ -160,6 +189,29 @@ function App() {
             زیادکردن
           </button>
         </form>
+
+        {/* --- Show existing words --- */}
+        <div className="mt-10">
+          <h2 className="text-2xl font-bold mb-2 text-blue-700">وشەکانت</h2>
+          <div className="bg-blue-50 rounded-xl p-4">
+            {loading ? (
+              <div>Loading...</div>
+            ) : words.length === 0 ? (
+              <div>No words yet.</div>
+            ) : (
+              <ul>
+                {words.map((w, i) => (
+                  <li key={i} className="py-2 border-b last:border-none flex flex-col md:flex-row md:items-center md:gap-4">
+                    <span className="font-bold text-lg">{w.word}</span>
+                    <span className="text-gray-600 text-sm">{w.latin}</span>
+                    <span className="text-gray-800 ml-2">{w.definition}</span>
+                    {/* <button>Edit</button> <button>Delete</button> (future!) */}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
       </div>
       <footer className="mt-6 text-gray-500 text-sm">
         <span role="img" aria-label="sparkles">✨</span> Kurdish Dictionary Entry • Designed by Bakhtyar

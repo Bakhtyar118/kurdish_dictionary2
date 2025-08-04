@@ -1,39 +1,22 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
 function App() {
-  // Form state
   const [word, setWord] = useState("");
+  const [plural, setPlural] = useState("");
   const [latin, setLatin] = useState("");
   const [definition, setDefinition] = useState("");
   const [english, setEnglish] = useState("");
+  const [kurmanji, setKurmanji] = useState("");
+  const [arabic, setArabic] = useState("");
+  const [farsi, setFarsi] = useState("");
+  const [phrase, setPhrase] = useState("");
+  const [note, setNote] = useState("");
   const [synonyms, setSynonyms] = useState("");
   const [antonyms, setAntonyms] = useState("");
   const [example, setExample] = useState("");
   const [regional, setRegional] = useState("");
   const [ipa, setIPA] = useState("");
 
-  // List of words from backend
-  const [words, setWords] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  // Fetch words when component mounts or after adding a word
-  const fetchWords = () => {
-    setLoading(true);
-    fetch("https://kurdish-dictionary2.onrender.com/words/")
-      .then((res) => res.json())
-      .then((data) => setWords(data))
-      .catch((err) => {
-        console.error("Failed to fetch words:", err);
-        setWords([]);
-      })
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    fetchWords();
-  }, []);
-
-  // Add new word handler
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -41,30 +24,15 @@ function App() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          word,
-          latin,
-          definition,
-          english,
-          synonyms,
-          antonyms,
-          example,
-          regional,
-          ipa,
+          word, plural, latin, definition, english, kurmanji, arabic, farsi, phrase, note,
+          synonyms, antonyms, example, regional, ipa,
         }),
       });
       if (res.ok) {
         alert("Word added!");
-        // Clear form
-        setWord("");
-        setLatin("");
-        setDefinition("");
-        setEnglish("");
-        setSynonyms("");
-        setAntonyms("");
-        setExample("");
-        setRegional("");
-        setIPA("");
-        fetchWords(); // Refresh list
+        setWord(""); setPlural(""); setLatin(""); setDefinition(""); setEnglish("");
+        setKurmanji(""); setArabic(""); setFarsi(""); setPhrase(""); setNote("");
+        setSynonyms(""); setAntonyms(""); setExample(""); setRegional(""); setIPA("");
       } else {
         const err = await res.json();
         alert("Failed: " + (err.detail || "Unknown error"));
@@ -80,138 +48,162 @@ function App() {
         <h1 className="text-3xl font-bold mb-6 text-blue-800 flex items-center gap-2 justify-end" dir="rtl">
           <span role="img" aria-label="key">🔑</span> وشە زیاد بکە
         </h1>
-        <form className="space-y-6" onSubmit={handleSubmit}>
-          {/* Kurdish word + IPA beside each other */}
+        <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="flex gap-4">
-            <div className="w-2/3">
-              <label className="block mb-1 text-right text-blue-900 font-semibold">وشە (کوردی)</label>
+            <div className="w-1/2">
+              <label className="block mb-1 text-right">وشە</label>
               <input
                 dir="rtl"
-                className="border border-blue-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-blue-300 text-lg"
+                className="border rounded-lg p-2 w-full"
                 value={word}
                 onChange={e => setWord(e.target.value)}
                 required
-                placeholder="وشە بنوسە..."
+                placeholder="وشە/Word (any script)"
               />
             </div>
-            <div className="w-1/3">
-              <label className="block mb-1 text-left font-semibold">IPA</label>
+            <div className="w-1/2">
+              <label className="block mb-1 text-right">Plural</label>
               <input
-                dir="ltr"
-                className="border border-gray-300 rounded-lg p-3 w-full text-left"
-                value={ipa}
-                onChange={e => setIPA(e.target.value)}
-                placeholder="IPA e.g. [ˈkʊɾdɪ]"
+                className="border rounded-lg p-2 w-full"
+                value={plural}
+                onChange={e => setPlural(e.target.value)}
+                placeholder="Plural form"
               />
             </div>
           </div>
-          {/* Latin + English beside each other */}
           <div className="flex gap-4">
             <div className="w-1/2">
-              <label className="block mb-1 text-right font-semibold">Latin</label>
+              <label className="block mb-1 text-right">Latin</label>
               <input
-                className="border border-gray-300 rounded-lg p-3 w-full"
+                className="border rounded-lg p-2 w-full"
                 value={latin}
                 onChange={e => setLatin(e.target.value)}
                 placeholder="Latin spelling"
               />
             </div>
             <div className="w-1/2">
-              <label className="block mb-1 text-right font-semibold">English</label>
+              <label className="block mb-1 text-right">IPA</label>
               <input
-                className="border border-gray-300 rounded-lg p-3 w-full"
+                className="border rounded-lg p-2 w-full"
+                value={ipa}
+                onChange={e => setIPA(e.target.value)}
+                placeholder="IPA [ˈkʊɾdɪ]"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block mb-1 text-right">Definition (کوردی)</label>
+            <textarea
+              dir="rtl"
+              className="border rounded-lg p-2 w-full"
+              value={definition}
+              onChange={e => setDefinition(e.target.value)}
+              placeholder="پێناسە / Definition"
+            />
+          </div>
+          <div className="flex gap-4">
+            <div className="w-1/2">
+              <label className="block mb-1">English</label>
+              <input
+                className="border rounded-lg p-2 w-full"
                 value={english}
                 onChange={e => setEnglish(e.target.value)}
                 placeholder="English translation"
               />
             </div>
+            <div className="w-1/2">
+              <label className="block mb-1">Kurmanji</label>
+              <input
+                className="border rounded-lg p-2 w-full"
+                value={kurmanji}
+                onChange={e => setKurmanji(e.target.value)}
+                placeholder="Kurmanji translation"
+              />
+            </div>
           </div>
-          {/* Definition */}
+          <div className="flex gap-4">
+            <div className="w-1/2">
+              <label className="block mb-1">Arabic</label>
+              <input
+                className="border rounded-lg p-2 w-full"
+                value={arabic}
+                onChange={e => setArabic(e.target.value)}
+                placeholder="Arabic translation"
+              />
+            </div>
+            <div className="w-1/2">
+              <label className="block mb-1">Farsi</label>
+              <input
+                className="border rounded-lg p-2 w-full"
+                value={farsi}
+                onChange={e => setFarsi(e.target.value)}
+                placeholder="Farsi translation"
+              />
+            </div>
+          </div>
           <div>
-            <label className="block mb-1 text-right text-purple-800 font-semibold">پێناسە</label>
+            <label className="block mb-1">Phrase</label>
+            <input
+              className="border rounded-lg p-2 w-full"
+              value={phrase}
+              onChange={e => setPhrase(e.target.value)}
+              placeholder="Phrase example"
+            />
+          </div>
+          <div>
+            <label className="block mb-1">Note</label>
+            <input
+              className="border rounded-lg p-2 w-full"
+              value={note}
+              onChange={e => setNote(e.target.value)}
+              placeholder="Any extra info"
+            />
+          </div>
+          <div className="flex gap-4">
+            <div className="w-1/2">
+              <label className="block mb-1">Synonyms</label>
+              <input
+                className="border rounded-lg p-2 w-full"
+                value={synonyms}
+                onChange={e => setSynonyms(e.target.value)}
+                placeholder="Synonyms (comma separated)"
+              />
+            </div>
+            <div className="w-1/2">
+              <label className="block mb-1">Antonyms</label>
+              <input
+                className="border rounded-lg p-2 w-full"
+                value={antonyms}
+                onChange={e => setAntonyms(e.target.value)}
+                placeholder="Antonyms (comma separated)"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block mb-1">Example</label>
             <textarea
-              dir="rtl"
-              className="border border-purple-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-purple-200 text-lg min-h-[80px]"
-              value={definition}
-              onChange={e => setDefinition(e.target.value)}
-              required
-              placeholder="پێناسە بنوسە..."
-            />
-          </div>
-          {/* Synonyms */}
-          <div>
-            <label className="block mb-1 text-right font-semibold">Synonyms</label>
-            <input
-              dir="rtl"
-              className="border border-gray-300 rounded-lg p-3 w-full"
-              value={synonyms}
-              onChange={e => setSynonyms(e.target.value)}
-              placeholder="Synonyms (comma-separated)"
-            />
-          </div>
-          {/* Antonyms */}
-          <div>
-            <label className="block mb-1 text-right font-semibold">Antonyms</label>
-            <input
-              dir="rtl"
-              className="border border-gray-300 rounded-lg p-3 w-full"
-              value={antonyms}
-              onChange={e => setAntonyms(e.target.value)}
-              placeholder="Antonyms (comma-separated)"
-            />
-          </div>
-          {/* Regional words */}
-          <div>
-            <label className="block mb-1 text-right font-semibold">Regional words (شوێن/ناوچە)</label>
-            <input
-              dir="rtl"
-              className="border border-gray-300 rounded-lg p-3 w-full"
-              value={regional}
-              onChange={e => setRegional(e.target.value)}
-              placeholder="e.g. سلیمانی، هەولێر، کەرماشان"
-            />
-          </div>
-          {/* Example */}
-          <div>
-            <label className="block mb-1 text-right font-semibold">Example</label>
-            <textarea
-              dir="rtl"
-              className="border border-gray-300 rounded-lg p-3 w-full"
+              className="border rounded-lg p-2 w-full"
               value={example}
               onChange={e => setExample(e.target.value)}
               placeholder="Example sentence"
             />
           </div>
+          <div>
+            <label className="block mb-1">Regional</label>
+            <input
+              className="border rounded-lg p-2 w-full"
+              value={regional}
+              onChange={e => setRegional(e.target.value)}
+              placeholder="Regions"
+            />
+          </div>
           <button
             type="submit"
-            className="mt-6 w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg py-3 font-bold shadow-lg hover:from-blue-600 hover:to-purple-600 transition"
+            className="mt-4 w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg py-3 font-bold shadow-lg hover:from-blue-600 hover:to-purple-600 transition"
           >
             زیادکردن
           </button>
         </form>
-
-        {/* --- Show existing words --- */}
-        <div className="mt-10">
-          <h2 className="text-2xl font-bold mb-2 text-blue-700">وشەکانت</h2>
-          <div className="bg-blue-50 rounded-xl p-4">
-            {loading ? (
-              <div>Loading...</div>
-            ) : words.length === 0 ? (
-              <div>No words yet.</div>
-            ) : (
-              <ul>
-                {words.map((w, i) => (
-                  <li key={i} className="py-2 border-b last:border-none flex flex-col md:flex-row md:items-center md:gap-4">
-                    <span className="font-bold text-lg">{w.word}</span>
-                    <span className="text-gray-600 text-sm">{w.latin}</span>
-                    <span className="text-gray-800 ml-2">{w.definition}</span>
-                    {/* <button>Edit</button> <button>Delete</button> (future!) */}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
       </div>
       <footer className="mt-6 text-gray-500 text-sm">
         <span role="img" aria-label="sparkles">✨</span> Kurdish Dictionary Entry • Designed by Bakhtyar
